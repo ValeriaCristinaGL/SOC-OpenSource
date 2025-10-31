@@ -1,0 +1,55 @@
+# Environment files
+.env
+.env.local
+.env.production
+*.env
+
+# Docker volumes and data
+volumes/
+data/
+logs/
+
+# SSL Certificates (segurança)
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+infrastructure/*/ssl_certs/
+infrastructure/*/certs/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.vs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Node modules (se usar)
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Wazuh specific
+infrastructure/wazuh-config/etc/client.keys
+infrastructure/wazuh-config/queue/
+infrastructure/wazuh-config/logs/
