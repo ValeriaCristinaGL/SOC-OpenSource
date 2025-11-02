@@ -31,9 +31,9 @@ services:
       - ./wazuh-certs/wazuh-indexer-key.pem:/usr/share/wazuh-indexer/config/certs/wazuh-indexer-key.pem
       - ./wazuh-certs/root-ca.pem:/usr/share/wazuh-indexer/config/certs/root-ca.pem
     secrets:
-      - souce: wazuh_indexer_password
+      - source: wazuh_indexer_password
         target: wazuh_indexer_password
-      - souce: wazuh_indexer_key
+      - source: wazuh_indexer_key
         target: wazuh_indexer_key
     networks:
       - wazuh-net
@@ -62,7 +62,7 @@ services:
       - ./wazuh-manager/rules:/var/ossec/etc/rules:ro
       - ./wazuh-manager/decoders:/var/ossec/etc/decoders:ro
     secrets:
-      - souce: wazuh_indexer_password
+      - source: wazuh_indexer_password
         target: wazuh_indexer_password
     depends_on:
       - wazuh-indexer
