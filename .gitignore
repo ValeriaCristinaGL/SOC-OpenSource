@@ -11,6 +11,7 @@ logs/
 
 # SSL Certificates (segurança)
 *.pem
+*.txt
 *.key
 *.crt
 *.p12

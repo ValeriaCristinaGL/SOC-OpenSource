@@ -1,0 +1,37 @@
+name: CI Validation - Docker Compose
+
+on:
+  push:
+    branches:
+      - main
+      - deve/valeria
+      - deve/pedro
+      - deve/thiago
+      - deve/david
+      - deve/alexia 
+  pull_request:
+    branches:
+      - main
+      - deve/valeria
+      - deve/pedro
+      - deve/thiago
+      - deve/david
+      - deve/alexia 
+
+jobs:
+  validate-docker-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        # Usar uma ação que instala o Docker Compose CLI
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate docker-compose.yml syntax
+        # Usa o comando 'config' do docker-compose para checar a sintaxe sem rodar os containers
+        run: docker compose -f infrastructure/docker-compose/docker-compose.yml config
+        
+      - name: Echo Success
+        run: echo "O arquivo docker-compose.yml passou na validação de sintaxe."
