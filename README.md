@@ -1,6 +1,6 @@
 #  MouraTech - Projeto SOC (Security Operations Center) Open Source
 
-![Banner do projeto SOC Opensource](URL_PARA_UM_BANNER_OPCIONAL)
+![Banner do projeto SOC Opensource](https://raw.githubusercontent.com/ValeriaCristinaGL/SOC-OpenSource/refs/heads/main/assets/arquiteturaSOC.jpg)
 
 Este repositório contém o projeto de desenvolvimento de um Centro de Operações de Segurança (SOC) funcional e de baixo custo, utilizando exclusivamente ferramentas _open source_. [cite_start]O projeto é parte da disciplina de Engenharia de Software e visa simular um ambiente real de monitoramento, detecção e resposta a incidentes de segurança[cite: 42, 45].
 
