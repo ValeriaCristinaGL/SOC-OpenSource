@@ -1,0 +1,12 @@
+services:
+  wazuh-certs-generator:
+    image: wazuh/wazuh-certs-generator:0.0.1
+    hostname: wazuh-certs-generator
+    container_name: wazuh-certs-generator
+    volumes:
+      # O volume agora aponta para o output_dir definido no certs.yml
+      - ./wazuh-certs:/certificates
+      # O arquivo de configuração dos certificados
+      - ./wazuh-certs/certs.yml:/config/certs.yml:ro
+    environment:
+      - WAZUH_VERSION=4.7.4
