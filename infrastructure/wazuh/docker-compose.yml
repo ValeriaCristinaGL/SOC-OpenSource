@@ -1,33 +1,25 @@
 services:
-  # -------------------- WAZUH INDEXER (Backend de Armazenamento) --------------------
   wazuh-indexer:
-    image: wazuh/wazuh-indexer:4.7.4
+    image: wazuh/wazuh-indexer:${WAZUH_VERSION}
     hostname: wazuh-indexer
     container_name: wazuh-indexer
     ports:
       - "9200:9200"
     environment:
-      - discovery.type=single-node
-      # Senhas lidas via Docker Secrets
       - WAZUH_INDEXER_PASSWORD_FILE=/run/secrets/wazuh_indexer_password
-      - WAZUH_INDEXER_SECURITY_CONFIG_PASSWORD_FILE=/run/secrets/wazuh_indexer_key
-      # --- CONFIGURAÇÃO TLS ADICIONADA ---
-      # Instruindo o Indexer a usar os certificados que montamos
+      - WAZUH_ADMIN_PASSWORD=${WAZUH_ADMIN_PASSWORD} # Injeta a senha do admin
+      - discovery.type=single-node
       - WAZUH_INDEXER_SSL_CERTIFICATE=/usr/share/wazuh-indexer/config/certs/wazuh-indexer.pem
       - WAZUH_INDEXER_SSL_CERTIFICATE_AUTHORITIES=/usr/share/wazuh-indexer/config/certs/root-ca.pem
       - WAZUH_INDEXER_SSL_KEY=/usr/share/wazuh-indexer/config/certs/wazuh-indexer-key.pem
     volumes:
       - wazuh_indexer_data:/usr/share/wazuh-indexer/data
-      - ./wazuh-certs:/usr/share/wazuh-indexer/config/certs:ro # :ro para read-only
+      - ./config/wazuh-certs:/usr/share/wazuh-indexer/config/certs:ro
     secrets:
       - source: wazuh_indexer_password
         target: wazuh_indexer_password
-      - source: wazuh_indexer_key
-        target: wazuh_indexer_key
-    # --- HEALTHCHECK ADICIONADO ---
-    # Garante que o serviço está pronto antes que outros dependentes iniciem
     healthcheck:
-      test: ["CMD", "curl", "-s", "-k", "-XGET", "https://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s"]
+      test: ["CMD", "curl", "-s", "-k", "-u", "admin:${WAZUH_ADMIN_PASSWORD}", "https://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s"]
       interval: 30s
       timeout: 30s
       retries: 5
@@ -35,65 +27,57 @@ services:
     networks:
       - wazuh-net
 
-  # -------------------- WAZUH MANAGER (Servidor Central SIEM) --------------------
   wazuh-manager:
-    image: wazuh/wazuh-manager:4.7.4
+    image: wazuh/wazuh-manager:${WAZUH_VERSION}
     hostname: wazuh-manager
     container_name: wazuh-manager
     ports:
-      - "1514:1514/udp" # Syslog
-      - "1515:1515/tcp"     # Comunicação com Agentes
-      - "55000:55000"   # API
+      - "1514:1514/udp"
+      - "1515:1515/tcp"
+      - "55000:55000"
     environment:
       - WAZUH_INDEXER_URL=https://wazuh-indexer:9200
       - WAZUH_INDEXER_PASSWORD_FILE=/run/secrets/wazuh_indexer_password
-      # --- CONFIGURAÇÃO TLS ADICIONADA ---
-      # Instruindo o Manager a confiar na nossa CA e a usar seus certificados
       - WAZUH_MANAGER_SSL_VERIFY=true
       - WAZUH_MANAGER_SSL_CERTIFICATE_AUTHORITIES=/var/ossec/etc/certs/root-ca.pem
       - WAZUH_MANAGER_SSL_CERTIFICATE=/var/ossec/etc/certs/wazuh-manager.pem
       - WAZUH_MANAGER_SSL_KEY=/var/ossec/etc/certs/wazuh-manager-key.pem
     volumes:
       - wazuh_manager_data:/var/ossec
-      - ./wazuh-certs:/var/ossec/etc/certs:ro # :ro para read-only
-      - ./wazuh-manager/rules:/var/ossec/etc/rules:ro
-      - ./wazuh-manager/decoders:/var/ossec/etc/decoders:ro
+      - ./config/wazuh-certs:/var/ossec/etc/certs:ro
+      - ./config/wazuh_manager/rules:/var/ossec/etc/rules:ro
+      - ./config/wazuh_manager/decoders:/var/ossec/etc/decoders:ro
     secrets:
       - source: wazuh_indexer_password
         target: wazuh_indexer_password
     depends_on:
       wazuh-indexer:
-        condition: service_healthy # <--- CONDIÇÃO ALTERADA
+        condition: service_healthy
     networks:
       - wazuh-net
 
-  # -------------------- WAZUH DASHBOARD (Interface Web) --------------------
   wazuh-dashboard:
-    image: wazuh/wazuh-dashboard:4.7.4
+    image: wazuh/wazuh-dashboard:${WAZUH_VERSION}
     hostname: wazuh-dashboard
     container_name: wazuh-dashboard
     ports:
-      # Mapeando 443 para 5601. O acesso será via https://localhost
-      - "443:5601"
+      - "${DASHBOARD_PORT}:5601"
     environment:
       - WAZUH_INDEXER_URL=https://wazuh-indexer:9200
       - WAZUH_INDEXER_PASSWORD_FILE=/run/secrets/wazuh_indexer_password
       - WAZUH_API_URL=https://wazuh-manager:55000
-      # --- CONFIGURAÇÃO TLS ADICIONADA ---
-      # Instruindo o Dashboard a usar seus certificados para o servidor web (HTTPS)
       - WAZUH_DASHBOARD_SSL_CERTIFICATE=/usr/share/wazuh-dashboard/config/certs/wazuh-dashboard.pem
       - WAZUH_DASHBOARD_SSL_KEY=/usr/share/wazuh-dashboard/config/certs/wazuh-dashboard-key.pem
-      # e a confiar na CA para se comunicar com o Indexer
       - WAZUH_DASHBOARD_SSL_CERTIFICATE_AUTHORITIES=/usr/share/wazuh-dashboard/config/certs/root-ca.pem
     volumes:
       - wazuh_dashboard_data:/usr/share/wazuh-dashboard/data
-      - ./wazuh-certs:/usr/share/wazuh-dashboard/config/certs:ro # :ro para read-only
+      - ./config/wazuh-certs:/usr/share/wazuh-dashboard/config/certs:ro
     secrets:
       - source: wazuh_indexer_password
         target: wazuh_indexer_password
     depends_on:
       wazuh-indexer:
-        condition: service_healthy # <--- CONDIÇÃO ALTERADA
+        condition: service_healthy
       wazuh-manager:
         condition: service_started
     networks:
@@ -106,9 +90,7 @@ volumes:
 
 secrets:
   wazuh_indexer_password:
-    file: ./wazuh-indexer-password.txt
-  wazuh_indexer_key:
-    file: ./wazuh-indexer-key.txt
+    file: ./secrets/wazuh_indexer_password.txt
 
 networks:
   wazuh-net:
