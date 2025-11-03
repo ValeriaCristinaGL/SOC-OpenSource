@@ -1,0 +1,20 @@
+nodes:
+  # -------------------- Wazuh Indexer --------------------
+  - name: wazuh-indexer
+    type: indexer
+    # deve coincidir com o hostname do container
+    ip: wazuh-indexer
+
+  # -------------------- Wazuh Manager --------------------
+  - name: wazuh-manager
+    type: server
+    ip: wazuh-manager
+
+  # -------------------- Wazuh Dashboard --------------------
+  - name: wazuh-dashboard
+    type: dashboard
+    ip: wazuh-dashboard
+
+# Caminho onde os certificados serão salvos dentro do container
+# (mapeado pelo volume ./wazuh-certs:/usr/share/wazuh-certs-generator/output)
+output_dir: /usr/share/wazuh-certs-generator/output
