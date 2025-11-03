@@ -1,3 +1,8 @@
+# Arquivos gerados do Docker Compose Wazuh
+infrastructure/docker-compose/wazuh-certs/
+infrastructure/docker-compose/wazuh-indexer-password.txt
+infrastructure/docker-compose/wazuh-indexer-key.txt
+
 # Environment files
 .env
 .env.local

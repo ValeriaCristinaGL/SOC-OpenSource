@@ -1,0 +1,97 @@
+services:
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:${WAZUH_VERSION}
+    hostname: wazuh-indexer
+    container_name: wazuh-indexer
+    ports:
+      - "9200:9200"
+    environment:
+      - WAZUH_INDEXER_PASSWORD_FILE=/run/secrets/wazuh_indexer_password
+      - WAZUH_ADMIN_PASSWORD=${WAZUH_ADMIN_PASSWORD} # Injeta a senha do admin
+      - discovery.type=single-node
+      - WAZUH_INDEXER_SSL_CERTIFICATE=/usr/share/wazuh-indexer/config/certs/wazuh-indexer.pem
+      - WAZUH_INDEXER_SSL_CERTIFICATE_AUTHORITIES=/usr/share/wazuh-indexer/config/certs/root-ca.pem
+      - WAZUH_INDEXER_SSL_KEY=/usr/share/wazuh-indexer/config/certs/wazuh-indexer-key.pem
+    volumes:
+      - wazuh_indexer_data:/usr/share/wazuh-indexer/data
+      - ./config/wazuh-certs:/usr/share/wazuh-indexer/config/certs:ro
+    secrets:
+      - source: wazuh_indexer_password
+        target: wazuh_indexer_password
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-k", "-u", "admin:${WAZUH_ADMIN_PASSWORD}", "https://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    networks:
+      - wazuh-net
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:${WAZUH_VERSION}
+    hostname: wazuh-manager
+    container_name: wazuh-manager
+    ports:
+      - "1514:1514/udp"
+      - "1515:1515/tcp"
+      - "55000:55000"
+    environment:
+      - WAZUH_INDEXER_URL=https://wazuh-indexer:9200
+      - WAZUH_INDEXER_PASSWORD_FILE=/run/secrets/wazuh_indexer_password
+      - WAZUH_MANAGER_SSL_VERIFY=true
+      - WAZUH_MANAGER_SSL_CERTIFICATE_AUTHORITIES=/var/ossec/etc/certs/root-ca.pem
+      - WAZUH_MANAGER_SSL_CERTIFICATE=/var/ossec/etc/certs/wazuh-manager.pem
+      - WAZUH_MANAGER_SSL_KEY=/var/ossec/etc/certs/wazuh-manager-key.pem
+    volumes:
+      - wazuh_manager_data:/var/ossec
+      - ./config/wazuh-certs:/var/ossec/etc/certs:ro
+      - ./config/wazuh_manager/rules:/var/ossec/etc/rules:ro
+      - ./config/wazuh_manager/decoders:/var/ossec/etc/decoders:ro
+    secrets:
+      - source: wazuh_indexer_password
+        target: wazuh_indexer_password
+    depends_on:
+      wazuh-indexer:
+        condition: service_healthy
+    networks:
+      - wazuh-net
+
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:${WAZUH_VERSION}
+    hostname: wazuh-dashboard
+    container_name: wazuh-dashboard
+    ports:
+      - "${DASHBOARD_PORT}:5601"
+    environment:
+      - WAZUH_INDEXER_URL=https://wazuh-indexer:9200
+      - WAZUH_INDEXER_PASSWORD_FILE=/run/secrets/wazuh_indexer_password
+      - WAZUH_API_URL=https://wazuh-manager:55000
+      - WAZUH_DASHBOARD_SSL_CERTIFICATE=/usr/share/wazuh-dashboard/config/certs/wazuh-dashboard.pem
+      - WAZUH_DASHBOARD_SSL_KEY=/usr/share/wazuh-dashboard/config/certs/wazuh-dashboard-key.pem
+      - WAZUH_DASHBOARD_SSL_CERTIFICATE_AUTHORITIES=/usr/share/wazuh-dashboard/config/certs/root-ca.pem
+    volumes:
+      - wazuh_dashboard_data:/usr/share/wazuh-dashboard/data
+      - ./config/wazuh-certs:/usr/share/wazuh-dashboard/config/certs:ro
+    secrets:
+      - source: wazuh_indexer_password
+        target: wazuh_indexer_password
+    depends_on:
+      wazuh-indexer:
+        condition: service_healthy
+      wazuh-manager:
+        condition: service_started
+    networks:
+      - wazuh-net
+
+volumes:
+  wazuh_indexer_data:
+  wazuh_manager_data:
+  wazuh_dashboard_data:
+
+secrets:
+  wazuh_indexer_password:
+    file: ./secrets/wazuh_indexer_password.txt
+
+networks:
+  wazuh-net:
+    driver: bridge
