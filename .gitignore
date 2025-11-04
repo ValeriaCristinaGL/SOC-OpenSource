@@ -1,7 +1,7 @@
-# Arquivos gerados do Docker Compose Wazuh
-infrastructure/docker-compose/wazuh-certs/
-infrastructure/docker-compose/wazuh-indexer-password.txt
-infrastructure/docker-compose/wazuh-indexer-key.txt
+# Wazuh specific
+infrastructure/wazuh-config/etc/client.keys
+infrastructure/wazuh-config/queue/
+infrastructure/wazuh-config/logs/
 
 # Environment files
 .env
@@ -54,8 +54,3 @@ node_modules/
 __pycache__/
 *.pyc
 *.pyo
-
-# Wazuh specific
-infrastructure/wazuh-config/etc/client.keys
-infrastructure/wazuh-config/queue/
-infrastructure/wazuh-config/logs/
