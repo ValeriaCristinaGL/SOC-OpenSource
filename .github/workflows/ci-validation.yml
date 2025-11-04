@@ -4,19 +4,20 @@ on:
   push:
     branches:
       - main
-      - deve/valeria
-      - deve/pedro
-      - deve/thiago
-      - deve/david
-      - deve/alexia 
+      - dev/thiago
+      - dev/alexia
+      - dev/pedro
+      - dev/valeria
+      - dev/david
+
   pull_request:
     branches:
       - main
-      - deve/valeria
-      - deve/pedro
-      - deve/thiago
-      - deve/david
-      - deve/alexia 
+      - dev/thiago
+      - dev/alexia
+      - dev/pedro
+      - dev/valeria
+      - dev/david
 
 jobs:
   validate-docker-compose:
@@ -31,7 +32,7 @@ jobs:
 
       - name: Validate docker-compose.yml syntax
         # Usa o comando 'config' do docker-compose para checar a sintaxe sem rodar os containers
-        run: docker compose -f infrastructure/docker-compose/docker-compose.yml config
+        run: docker compose -f infra/docker-soc/docker-compose.yml config
         
       - name: Echo Success
         run: echo "O arquivo docker-compose.yml passou na validação de sintaxe."
