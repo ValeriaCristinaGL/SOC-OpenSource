@@ -1,12 +1,14 @@
 # Script de instalação e configuração do Agente Wazuh no Windows 11
-param(
+
+# --- MODIFICADO ---
+# Define um parâmetro obrigatório para o IP do Manager
+param (
     [Parameter(Mandatory=$true)]
-    [string]$WazuhManagerIP
+    [string]$ManagerIP
 )
+# --- FIM DA MODIFICAÇÃO ---
 
-$AgentName = "Windows-Client-$((Get-CimInstance -ClassName Win32_ComputerSystem).Name)"
-
-$WazuhManagerIP = "<IP_DO_MANAGER>" # Ex: 192.168.1.10
+# Remove a linha antiga: $WazuhManagerIP = "<IP_DO_MANAGER>"
 $AgentName = "Windows-Client-$((Get-CimInstance -ClassName Win32_ComputerSystem).Name)"
 
 # 1. Download do instalador (Altere a URL da versão se necessário)
@@ -17,7 +19,10 @@ Invoke-WebRequest -Uri $InstallerUrl -OutFile $InstallerPath
 
 # 2. Instalação silenciosa
 Write-Host "Iniciando a instalação..."
-Start-Process msiexec -ArgumentList "/i `"$InstallerPath`" /qn WAZUH_MANAGER=`"$WazuhManagerIP`" WAZUH_AGENT_NAME=`"$AgentName`"" -Wait
+# --- MODIFICADO ---
+# Usa a variável $ManagerIP vinda do parâmetro
+Start-Process msiexec -ArgumentList "/i `"$InstallerPath`" /qn WAZUH_MANAGER=`"$ManagerIP`" WAZUH_AGENT_NAME=`"$AgentName`"" -Wait
+# --- FIM DA MODIFICAÇÃO ---
 
 # 3. Verificação do serviço (pode ser necessário um breve atraso)
 Start-Sleep -Seconds 5

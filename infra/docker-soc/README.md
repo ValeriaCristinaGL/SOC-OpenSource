@@ -16,7 +16,7 @@ cd SOC-OPENSOURCE
 Bash
 
 # Navegue para o diretório correto
-cd infrastructure/docker-compose/
+cd infrastructure/wazuh/
 Crie uma senha forte para o usuário admin
 echo "SuaSenhaSuperForteAqui" > wazuh-indexer-password.txt
 
