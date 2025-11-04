@@ -1,0 +1,65 @@
+services:
+  # -------------------- WAZUH INDEXER (Backend de Armazenamento) --------------------
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:4.7.4 # Versão recomendada
+    hostname: wazuh-indexer
+    container_name: wazuh-indexer
+    ports:
+      - "9200:9200" # Porta para o Dashboard
+    environment:
+      - discovery.type=single-node
+      # Defina o hostname e senha aqui ou use arquivos de secret (melhor prática em produção)
+    volumes:
+      - wazuh_indexer_data:/usr/share/wazuh-indexer/data
+    networks:
+      wazuh-net:
+        aliases:    
+          - wazuh.indexer
+
+  # -------------------- WAZUH MANAGER (Servidor Central SIEM) --------------------
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.7.4
+    hostname: wazuh-manager
+    container_name: wazuh-manager
+    ports:
+      - "1514:1514/udp" # Porta para logs Syslog (futuro Suricata)
+      - "1515:1515"     # Porta para comunicação com Agentes Wazuh
+      - "55000:55000"   # Porta para API (Opcional, se o Dashboard não estiver no mesmo compose)
+    environment:
+      # Use o nome do host do Indexer no mesmo compose
+      - WAZUH_INDEXER_URL=https://wazuh-indexer:9200
+    volumes:
+      - wazuh_manager_data:/var/ossec
+      # Montar diretórios para customização de regras e decodificadores (para futuros Sprints)
+      # - ./wazuh-manager/rules/custom_rules.xml:/var/ossec/etc/rules/custom_rules.xml:ro
+      # - ./wazuh-manager/decoders/custom_decoders.xml:/var/ossec/etc/decoders/custom_decoders.xml:ro
+    depends_on:
+      - wazuh-indexer
+    networks:
+      wazuh-net:
+        aliases:
+          - wazuh.manager
+
+  # -------------------- WAZUH DASHBOARD (Interface Web) --------------------
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.7.4
+    hostname: wazuh-dashboard
+    container_name: wazuh-dashboard
+    ports:
+      - "443:5601" # Porta para acesso via HTTPS (padrão 5601, mas 443 é comum para web)
+    environment:
+      - WAZUH_INDEXER_URL=https://wazuh-indexer:9200
+      - WAZUH_MANAGER_URL=https://wazuh-manager
+    depends_on:
+      - wazuh-indexer
+      - wazuh-manager
+    networks:
+      - wazuh-net
+
+volumes:
+  wazuh_indexer_data:
+  wazuh_manager_data:
+
+networks:
+  wazuh-net:
+    driver: bridge
